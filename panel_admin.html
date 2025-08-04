@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Coinawe Bot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --neon-blue: #00bfff;
+      --dark-blue: #0a0e1c;
+      --panel-bg: rgba(10, 14, 28, 0.7);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--dark-blue);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 300%;
+      height: 300%;
+      background: radial-gradient(circle, var(--neon-blue) 10%, rgba(10, 14, 28, 0) 70%);
+      opacity: 0.1;
+      transform: translate(-50%, -50%);
+      animation: cloud-movement 60s infinite linear;
+      filter: blur(150px);
+    }
+    @keyframes cloud-movement {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      50% { transform: translate(-10%, -60%) rotate(180deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    .main-container {
+      background-color: var(--panel-bg);
+      border: 2px solid var(--neon-blue);
+      box-shadow: 0 0 40px var(--neon-blue), 0 0 20px rgba(0, 191, 255, 0.5) inset;
+      backdrop-filter: blur(3px);
+    }
+    .neon-glow-title {
+      animation: neon-glow 1.5s infinite alternate;
+      text-shadow: 0 0 10px var(--neon-blue);
+    }
+    @keyframes neon-glow {
+      from { text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue); }
+      to { text-shadow: 0 0 20px var(--neon-blue), 0 0 30px var(--neon-blue), 0 0 40px var(--neon-blue); }
+    }
+    /* Custom CSS for a better tab and table appearance */
+    .tab-button {
+      padding: 10px 20px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+      color: #9ca3af; /* Light gray for inactive tabs */
+    }
+    .tab-button:hover {
+      color: var(--neon-blue);
+    }
+    .active-tab {
+      border-bottom-color: var(--neon-blue);
+      color: var(--neon-blue);
+      font-weight: 600;
+    }
+    .tab-content {
+      transition: opacity 0.3s ease;
+    }
+    .table-header {
+      padding: 0.75rem 1.5rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-badge {
+      display: inline-flex;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      line-height: 1rem;
+      font-weight: 600;
+      border-radius: 9999px;
+    }
+    /* Specific status colors */
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-completed { background-color: #d1fae5; color: #065f46; }
+    .status-dispute { background-color: #fee2e2; color: #991b1b; }
+    .status-default { background-color: #e5e7eb; color: #4b5563; }
+    
+    .text-dark-contrast {
+        color: #e5e7eb;
+    }
+    .table-text-color {
+        color: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Container -->
+  <div class="main-container max-w-7xl mx-auto p-6 sm:p-10 rounded-xl">
+    <h1 class="text-3xl font-bold mb-6 neon-glow-title">Panel Admin Coinawe</h1>
+
+    <!-- Tabs for different sections -->
+    <div class="flex flex-wrap mb-6 border-b border-gray-700">
+      <button onclick="showSection('dashboard')" class="tab-button active-tab">Dashboard</button>
+      <button onclick="showSection('users')" class="tab-button">Data Pengguna</button>
+      <button onclick="showSection('pending-escrow')" class="tab-button">Escrow Tertunda</button>
+      <button onclick="showSection('all-escrow')" class="tab-button">Semua Transaksi Escrow</button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="flex justify-center items-center h-48 text-gray-400 text-lg">
+      <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Memuat data...
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="tab-content">
+      <h2 class="text-2xl font-semibold mb-4 text-dark-contrast">Ringkasan Statistik</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-blue-100 p-6 rounded-lg shadow-md border border-blue-200">
+          <p class="text-lg text-blue-800">Total Pengguna</p>
+          <p id="user-count" class="text-4xl font-bold text-blue-900 mt-2">0</p>
+        </div>
+        <div class="bg-green-100 p-6 rounded-lg shadow-md border border-green-200">
+          <p class="text-lg text-green-800">Transaksi Aktif</p>
+          <p id="active-escrow-count" class="text-4xl font-bold text-green-900 mt-2">0</p>
+        </div>
+        <div class="bg-yellow-100 p-6 rounded-lg shadow-md border border-yellow-200">
+          <p class="text-lg text-yellow-800">Transaksi Selesai</p>
+          <p id="completed-escrow-count" class="text-4xl font-bold text-yellow-900 mt-2">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Section -->
+    <div id="users-section" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-4 text-dark-contrast">Daftar Pengguna</h2>
+      <div class="overflow-x-auto rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead class="bg-gray-800">
+            <tr>
+              <th scope="col" class="table-header">User ID</th>
+              <th scope="col" class="table-header">Username</th>
+              <th scope="col" class="table-header">Ref. By</th>
+              <th scope="col" class="table-header">Ref. Code</th>
+              <th scope="col" class="table-header">Language</th>
+            </tr>
+          </thead>
+          <tbody id="user-table-body" class="bg-gray-900 divide-y divide-gray-700">
+            <!-- Data will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pending Escrow Section (NEW) -->
+    <div id="pending-escrow-section" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-4 text-dark-contrast">Daftar Transaksi Escrow Tertunda</h2>
+      <div class="overflow-x-auto rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead class="bg-gray-800">
+            <tr>
+              <th scope="col" class="table-header">Escrow ID</th>
+              <th scope="col" class="table-header">Buyer ID</th>
+              <th scope="col" class="table-header">Seller ID</th>
+              <th scope="col" class="table-header">Jumlah</th>
+              <th scope="col" class="table-header">Item</th>
+              <th scope="col" class="table-header">Status</th>
+            </tr>
+          </thead>
+          <tbody id="pending-escrow-table-body" class="bg-gray-900 divide-y divide-gray-700">
+            <!-- Data will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- All Escrow Section (Updated) -->
+    <div id="all-escrow-section" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-4 text-dark-contrast">Semua Transaksi Escrow</h2>
+      <div class="overflow-x-auto rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead class="bg-gray-800">
+            <tr>
+              <th scope="col" class="table-header">Escrow ID</th>
+              <th scope="col" class="table-header">Buyer ID</th>
+              <th scope="col" class="table-header">Seller ID</th>
+              <th scope="col" class="table-header">Jumlah</th>
+              <th scope="col" class="table-header">Item</th>
+              <th scope="col" class="table-header">Status</th>
+            </tr>
+          </thead>
+          <tbody id="all-escrow-table-body" class="bg-gray-900 divide-y divide-gray-700">
+            <!-- Data will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchData();
+    });
+
+    /**
+     * Fetches all necessary data from the server-side Apps Script functions.
+     * This function is called on page load.
+     */
+    function fetchData() {
+      const loader = document.getElementById('loading');
+      loader.classList.remove('hidden');
+
+      Promise.all([
+        new Promise((resolve) => google.script.run.withSuccessHandler(resolve).getUsers()),
+        new Promise((resolve) => google.script.run.withSuccessHandler(resolve).getEscrowTransactions())
+      ])
+      .then(([users, escrows]) => {
+        populateDashboard(users, escrows);
+        populateUsersTable(users);
+        populateAllEscrowTable(escrows);
+        populatePendingEscrowTable(escrows);
+      })
+      .catch(err => {
+        console.error("Error fetching data:", err);
+      })
+      .finally(() => {
+        loader.classList.add('hidden');
+      });
+    }
+
+    /**
+     * Populates the dashboard with summary statistics.
+     * @param {Array<Array>} users - The list of all users.
+     * @param {Array<Array>} escrows - The list of all escrow transactions.
+     */
+    function populateDashboard(users, escrows) {
+      document.getElementById('user-count').textContent = users.length;
+      
+      const activeEscrows = escrows.filter(row => ['PENDING_USER', 'PENDING', 'ACCEPTED', 'WAITING_PROOF_BUYER', 'WAITING_RELEASE', 'WAITING_ADMIN_FINAL', 'ON_DISPUTE'].includes(row[5]));
+      document.getElementById('active-escrow-count').textContent = activeEscrows.length;
+      
+      const completedEscrows = escrows.filter(row => row[5] === 'COMPLETED');
+      document.getElementById('completed-escrow-count').textContent = completedEscrows.length;
+    }
+
+    /**
+     * Populates the Users table with user data.
+     * @param {Array<Array>} users - The list of all users.
+     */
+    function populateUsersTable(users) {
+      const tableBody = document.getElementById('user-table-body');
+      tableBody.innerHTML = '';
+      users.forEach(user => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-800';
+        row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium table-text-color">${user[0]}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${user[4] || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${user[1] || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${user[2] || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${user[3] || '-'}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    /**
+     * Populates the All Escrow Transactions table with all data.
+     * @param {Array<Array>} escrows - The list of all escrow transactions.
+     */
+    function populateAllEscrowTable(escrows) {
+      const tableBody = document.getElementById('all-escrow-table-body');
+      tableBody.innerHTML = '';
+      escrows.forEach(escrow => {
+        const row = createEscrowTableRow(escrow);
+        tableBody.appendChild(row);
+      });
+    }
+
+    /**
+     * Populates the Pending Escrow Transactions table with filtered data.
+     * @param {Array<Array>} escrows - The list of all escrow transactions.
+     */
+    function populatePendingEscrowTable(escrows) {
+      const tableBody = document.getElementById('pending-escrow-table-body');
+      tableBody.innerHTML = '';
+      const pendingStatuses = ['PENDING_USER', 'PENDING', 'ACCEPTED', 'WAITING_PROOF_BUYER', 'WAITING_RELEASE', 'WAITING_ADMIN_FINAL', 'ON_DISPUTE'];
+      const pendingEscrows = escrows.filter(row => pendingStatuses.includes(row[5]));
+      
+      pendingEscrows.forEach(escrow => {
+        const row = createEscrowTableRow(escrow);
+        tableBody.appendChild(row);
+      });
+    }
+    
+    /**
+     * Creates a table row element for an escrow transaction with appropriate status styling.
+     * @param {Array<any>} escrow - The escrow transaction data.
+     * @returns {HTMLTableRowElement} The generated table row.
+     */
+    function createEscrowTableRow(escrow) {
+      const status = escrow[5];
+      let statusClass = 'status-default';
+      if (status.includes('PENDING') || status.includes('WAITING')) statusClass = 'status-pending';
+      else if (status === 'COMPLETED' || status === 'RELEASED') statusClass = 'status-completed';
+      else if (status === 'ON_DISPUTE') statusClass = 'status-dispute';
+      
+      const row = document.createElement('tr');
+      row.className = 'hover:bg-gray-800';
+      row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium table-text-color">${escrow[0]}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${escrow[1] || '-'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${escrow[2] || '-'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${escrow[3] || '-'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm table-text-color">${escrow[4] || '-'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">
+          <span class="status-badge ${statusClass}">
+            ${status}
+          </span>
+        </td>
+      `;
+      return row;
+    }
+
+    /**
+     * Handles tab switching for different sections.
+     * @param {string} sectionId - The ID of the section to show.
+     */
+    function showSection(sectionId) {
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => content.classList.add('hidden'));
+
+      const tabButtons = document.querySelectorAll('.tab-button');
+      tabButtons.forEach(button => button.classList.remove('active-tab'));
+
+      document.getElementById(`${sectionId}-section`).classList.remove('hidden');
+      document.querySelector(`[onclick="showSection('${sectionId}')"]`).classList.add('active-tab');
+    }
+  </script>
+
+</body>
+</html>
